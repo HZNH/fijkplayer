@@ -22,14 +22,18 @@
 
 part of fijkplayer;
 
+typedef OnFileSave<T>(T FileResult);
+
 /// Default builder generate default [FijkPanel] UI
 Widget defaultFijkPanelBuilder(FijkPlayer player, FijkData data,
-    BuildContext context, Size viewSize, Rect texturePos) {
+    BuildContext context, Size viewSize, Rect texturePos,
+    {OnFileSave fileResult}) {
   return _DefaultFijkPanel(
       player: player,
       buildContext: context,
       viewSize: viewSize,
-      texturePos: texturePos);
+      texturePos: texturePos,
+      fileSave: fileResult);
 }
 
 /// Default Panel Widget
@@ -38,12 +42,14 @@ class _DefaultFijkPanel extends StatefulWidget {
   final BuildContext buildContext;
   final Size viewSize;
   final Rect texturePos;
+  final OnFileSave fileSave;
 
   const _DefaultFijkPanel({
     @required this.player,
     this.buildContext,
     this.viewSize,
     this.texturePos,
+    this.fileSave,
   });
 
   @override
@@ -219,7 +225,12 @@ class _DefaultFijkPanelState extends State<_DefaultFijkPanel> {
                 style: TextStyle(fontSize: 14.0),
               ),
             ),
-
+            InkWell(
+              child: Icon(Icons.camera_alt),
+              onTap: () {
+                takeSnapshot();
+              },
+            ),
             _duration.inMilliseconds == 0
                 ? Expanded(child: Center())
                 : Expanded(
@@ -279,6 +290,14 @@ class _DefaultFijkPanelState extends State<_DefaultFijkPanel> {
         ),
       ),
     );
+  }
+
+  void takeSnapshot() {
+    player.takeSnapShot().then((v) {
+      if (widget.fileSave != null) widget.fileSave(v);
+    }).catchError((e) {
+      FijkLog.d("get snapshot failed");
+    });
   }
 
   @override
